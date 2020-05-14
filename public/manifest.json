@@ -1,25 +1,29 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
-  "icons": [
-    {
-      "src": "favicon.ico",
-      "sizes": "64x64 32x32 24x24 16x16",
-      "type": "image/x-icon"
-    },
-    {
-      "src": "logo192.png",
-      "type": "image/png",
-      "sizes": "192x192"
-    },
-    {
-      "src": "logo512.png",
-      "type": "image/png",
-      "sizes": "512x512"
-    }
+  "name": "Dynamic Bookmark",
+  "version": "0.0.1",
+  "description": "My first extension lol",
+  "permissions": [
+      "bookmarks",
+      "storage"
   ],
-  "start_url": ".",
-  "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "browser_action": {
+      "default_icon": {
+          
+      },
+      "default_title": "Dynamic Bookmarks",
+      "default_popup": "index.html"
+  },
+  "background": {
+      "scripts": [
+          "background.js"
+      ],
+      "persistent": false
+  },
+  "icons": {
+    "16": "logo.png",
+    "48": "logo.png",
+    "128": "logo.png"
+  },
+  "content_security_policy": "script-src 'self' 'sha256-QM+HKPczd43Ke++ZMRCqNOUxYEg1Q8bHX/tSRAWAlwM='; object-src 'self'",
+  "manifest_version": 2
 }
