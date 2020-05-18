@@ -11,11 +11,11 @@
             
         },
         "default_title": "Dynamic Bookmarks",
-        "default_popup": "popup.html"
+        "default_popup": "popup/index.html"
     },
     "background": {
         "scripts": [
-            "background.js"
+            "scripts/background.js"
         ],
         "persistent": false
     },
