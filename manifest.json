@@ -3,8 +3,8 @@
     "version": "0.1",
     "description": "My first extension lol",
     "permissions": [
-        "bookmarks",
-        "storage"
+        "storage",
+        "bookmarks"
     ],
     "browser_action": {
         "default_icon": {
