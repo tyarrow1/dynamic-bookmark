@@ -19,7 +19,7 @@ function init() {
         document.getElementById("demo").innerHTML = folder_name;
         print(`Found ${folder_name} in storage\n`)
 
-        if (typeof (folder_name) === "undefined") {
+        if (typeof(folder_name) === "undefined") {
             folder_name = "";
             bookmark_mode = false;
             return;
@@ -46,12 +46,12 @@ function search_create_folder() {
                     'title': folder_name
                 }, function(result) {
                     parent_folder = result;
-                    print("Created "+parent_folder.title);
+                    print("Created "+parent_folder.title+" bookmark folder");
                     populate_bookmarks();
                 });
             } else {
                 // use the bookmark folder
-                print("Found " + results[0].title);
+                print("Found " + results[0].title + " bookmark folder");
                 parent_folder = results[0];
                 populate_bookmarks();
             }
@@ -60,7 +60,28 @@ function search_create_folder() {
 }
 
 function populate_bookmarks() {
-    //chrome.bookmarks.getChildren()
+    chrome.bookmarks.getChildren(parent_folder.id,function(results) {
+        if (typeof(results) === "undefined" || results.length === 0) {
+            print("No bookmarks found in folder");
+            bookmark_pairs = [];
+            return;
+        }
+        // Initialize new_bookmark_pairs
+        var new_bookmark_pairs = [];
+
+        // Populate the new array
+        results.forEach(element => {
+            new_bookmark_pairs.push(element);
+        });
+
+        // Print the new array
+        new_bookmark_pairs.forEach(element => {
+            print(`${element.title}:${element.url}`);
+        });
+
+        bookmark_pairs = new_bookmark_pairs;
+        bookmark_mode = true;
+    });
 }
 
 function move_folders() {
