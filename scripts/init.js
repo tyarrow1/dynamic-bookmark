@@ -10,23 +10,56 @@ document.getElementById("folder_name_submit").onclick = change_folder_name;
 // Run init() (which can be run multiple times)
 init();
 
-function init() {
+async function init() {
     // Check to see if the folder has already been set
-    chrome.storage.sync.get(['DYBK_folder_name'], function (result) {
-        folder_name = result.DYBK_folder_name;
+    // chrome.storage.sync.get(['DYBK_folder_name'], function (result) {
+    //     folder_name = result.DYBK_folder_name;
 
-        // For testing purposes
-        document.getElementById("demo").innerHTML = folder_name;
-        print(`Found ${folder_name} in storage\n`)
+    //     // For testing purposes
+    //     document.getElementById("demo").innerHTML = folder_name;
+    //     print(`Found ${folder_name} in storage\n`)
 
-        if (typeof(folder_name) === "undefined") {
-            folder_name = "";
-            bookmark_mode = false;
-            return;
+    //     if (typeof (folder_name) === "undefined") {
+    //         folder_name = "";
+    //         bookmark_mode = false;
+    //         return;
+    //     }
+
+    //     search_create_folder();
+    // });
+
+    // get_folder_name().then(
+    //     (name) => {
+    //         folder_name = name;
+    //         document.getElementById("demo").innerHTML = folder_name;
+    //         print(`Found ${folder_name} in storage\n`);
+    //     }
+    // ).catch(
+    //     (name) => {
+    //         document.getElementById("demo").innerHTML = "no folder";
+    //         print("Didn't find a folder")
+    //     }
+    // )
+
+    let name = await get_folder_name();
+    document.getElementById("demo").innerHTML = folder_name;
+    print(name);
+}
+
+// Returns the folder name
+function get_folder_name() {
+    return new Promise(
+        (resolve, reject) => {
+            chrome.storage.sync.get(['DYBK_folder_name'], function (result) {
+                let name = result.DYBK_folder_name;
+                if (typeof (name) === "undefined") {
+                    reject(name);
+                } else {
+                    resolve(name);
+                }
+            })
         }
-
-        search_create_folder();
-    });
+    );
 }
 
 function search_create_folder() {
@@ -44,9 +77,9 @@ function search_create_folder() {
                 chrome.bookmarks.create({
                     'parentId': otherBookmarksID,
                     'title': folder_name
-                }, function(result) {
+                }, function (result) {
                     parent_folder = result;
-                    print("Created "+parent_folder.title+" bookmark folder");
+                    print("Created " + parent_folder.title + " bookmark folder");
                     populate_bookmarks();
                 });
             } else {
@@ -60,8 +93,8 @@ function search_create_folder() {
 }
 
 function populate_bookmarks() {
-    chrome.bookmarks.getChildren(parent_folder.id,function(results) {
-        if (typeof(results) === "undefined" || results.length === 0) {
+    chrome.bookmarks.getChildren(parent_folder.id, function (results) {
+        if (typeof (results) === "undefined" || results.length === 0) {
             print("No bookmarks found in folder");
             bookmark_pairs = [];
             return;
