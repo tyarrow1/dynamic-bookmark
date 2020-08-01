@@ -41,55 +41,58 @@ async function init() {
     //     }
     // )
 
-    let name = await get_folder_name();
+    let storage = chrome.storage.sync;
+    let bookmarks = chrome.bookmarks;
+
+    let name = await promise_wrapper(storage.get,storage,['DYBK_folder_name']);
+    folder_name = name.DYBK_folder_name;
     document.getElementById("demo").innerHTML = folder_name;
-    print(name);
+
+    
 }
 
-// Returns the folder name
-function get_folder_name() {
+function promise_wrapper(func,context,options = []) {
+    let newFunc = func.bind(context);
     return new Promise(
-        (resolve, reject) => {
-            chrome.storage.sync.get(['DYBK_folder_name'], function (result) {
-                let name = result.DYBK_folder_name;
-                if (typeof (name) === "undefined") {
-                    reject(name);
-                } else {
-                    resolve(name);
-                }
-            })
+        (resolve) => {
+            newFunc(...options, resolve);
         }
     );
 }
 
-function search_create_folder() {
-    var otherBookmarksID = 0;
-    chrome.bookmarks.getTree(function (tree) {
-        otherBookmarksID = tree[0].children[1].id;
+async function search_create_folder() {
+    // var otherBookmarksID = 0;
+    // chrome.bookmarks.getTree(function (tree) {
+    //     otherBookmarksID = tree[0].children[1].id;
 
-        // Check if the bookmark folder has been created
-        chrome.bookmarks.search({
-            'title': folder_name
-        }, function (results) {
-            if (results.length === 0) {
-                // create the bookmark folder
-                print("Didn't find anything");
-                chrome.bookmarks.create({
-                    'parentId': otherBookmarksID,
-                    'title': folder_name
-                }, function (result) {
-                    parent_folder = result;
-                    print("Created " + parent_folder.title + " bookmark folder");
-                    populate_bookmarks();
-                });
-            } else {
-                // use the bookmark folder
-                print("Found " + results[0].title + " bookmark folder");
-                parent_folder = results[0];
-                populate_bookmarks();
-            }
-        });
-    });
+    //     // Check if the bookmark folder has been created
+    //     chrome.bookmarks.search({
+    //         'title': folder_name
+    //     }, function (results) {
+    //         if (results.length === 0) {
+    //             // create the bookmark folder
+    //             print("Didn't find anything");
+    //             chrome.bookmarks.create({
+    //                 'parentId': otherBookmarksID,
+    //                 'title': folder_name
+    //             }, function (result) {
+    //                 parent_folder = result;
+    //                 print("Created " + parent_folder.title + " bookmark folder");
+    //                 populate_bookmarks();
+    //             });
+    //         } else {
+    //             // use the bookmark folder
+    //             print("Found " + results[0].title + " bookmark folder");
+    //             parent_folder = results[0];
+    //             populate_bookmarks();
+    //         }
+    //     });
+    // });
+
+    // Get the ID of the "Other Bookmarks" folder
+    let otherBookmarksID = (await promise_wrapper(bookmarks.getTree,bookmarks))[0].children[1].id;
+
+    
 }
 
 function populate_bookmarks() {
