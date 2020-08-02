@@ -25,7 +25,7 @@ async function init() {
     folder_name = name.DYBK_folder_name;
     document.getElementById("demo").innerHTML = folder_name;
 
-    search_create_folder();
+    await search_create_folder();
     populate_bookmarks();
 }
 
@@ -65,6 +65,7 @@ async function search_create_folder() {
             parent_folder = target;
         }
     }
+    return;
 }
 
 // This function creates the bookmark folder (called by search_create_folder)
@@ -82,7 +83,10 @@ async function create_folder() {
     print("Created " + parent_folder.title + " bookmark folder");
 }
 
+// This function populates bookmarks into the bookmark folder
 function populate_bookmarks() {
+    print("populating bookmarks");
+
     chrome.bookmarks.getChildren(parent_folder.id, function (results) {
         if (typeof (results) === "undefined" || results.length === 0) {
             print("No bookmarks found in folder");
