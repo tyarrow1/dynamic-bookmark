@@ -10,89 +10,76 @@ document.getElementById("folder_name_submit").onclick = change_folder_name;
 // Run init() (which can be run multiple times)
 init();
 
+// This function is the initial function, which can be run anytime to refresh the bookmarks/folder
 async function init() {
-    // Check to see if the folder has already been set
-    // chrome.storage.sync.get(['DYBK_folder_name'], function (result) {
-    //     folder_name = result.DYBK_folder_name;
-
-    //     // For testing purposes
-    //     document.getElementById("demo").innerHTML = folder_name;
-    //     print(`Found ${folder_name} in storage\n`)
-
-    //     if (typeof (folder_name) === "undefined") {
-    //         folder_name = "";
-    //         bookmark_mode = false;
-    //         return;
-    //     }
-
-    //     search_create_folder();
-    // });
-
-    // get_folder_name().then(
-    //     (name) => {
-    //         folder_name = name;
-    //         document.getElementById("demo").innerHTML = folder_name;
-    //         print(`Found ${folder_name} in storage\n`);
-    //     }
-    // ).catch(
-    //     (name) => {
-    //         document.getElementById("demo").innerHTML = "no folder";
-    //         print("Didn't find a folder")
-    //     }
-    // )
-
+    // Shorcut to reduce function call complexity
     let storage = chrome.storage.sync;
-    let bookmarks = chrome.bookmarks;
 
-    let name = await promise_wrapper(storage.get,storage,['DYBK_folder_name']);
+    // Obtain the folder name from chrome storage
+    let name = await promise_wrapper(storage.get, storage, ['DYBK_folder_name']);
+    if (typeof(name) === "undefined") {
+        print("Folder not found");
+        bookmark_mode = false;
+        return;
+    }
     folder_name = name.DYBK_folder_name;
     document.getElementById("demo").innerHTML = folder_name;
 
-    
+    search_create_folder();
+    populate_bookmarks();
 }
 
-function promise_wrapper(func,context,options = []) {
-    let newFunc = func.bind(context);
-    return new Promise(
-        (resolve) => {
-            newFunc(...options, resolve);
-        }
-    );
-}
-
+// This function will find the bookmark folder, creating it if it needs to
 async function search_create_folder() {
-    // var otherBookmarksID = 0;
-    // chrome.bookmarks.getTree(function (tree) {
-    //     otherBookmarksID = tree[0].children[1].id;
-
-    //     // Check if the bookmark folder has been created
-    //     chrome.bookmarks.search({
-    //         'title': folder_name
-    //     }, function (results) {
-    //         if (results.length === 0) {
-    //             // create the bookmark folder
-    //             print("Didn't find anything");
-    //             chrome.bookmarks.create({
-    //                 'parentId': otherBookmarksID,
-    //                 'title': folder_name
-    //             }, function (result) {
-    //                 parent_folder = result;
-    //                 print("Created " + parent_folder.title + " bookmark folder");
-    //                 populate_bookmarks();
-    //             });
-    //         } else {
-    //             // use the bookmark folder
-    //             print("Found " + results[0].title + " bookmark folder");
-    //             parent_folder = results[0];
-    //             populate_bookmarks();
-    //         }
-    //     });
-    // });
+    // Shortcut to reduce function call complexity
+    let bookmarks = chrome.bookmarks;
 
     // Get the ID of the "Other Bookmarks" folder
-    let otherBookmarksID = (await promise_wrapper(bookmarks.getTree,bookmarks))[0].children[1].id;
+    let otherBookmarksID = (await promise_wrapper(bookmarks.getTree, bookmarks))[0].children[1].id;
 
-    
+    // Search for the correct folder
+    let search_term = {
+        'title': folder_name
+    };
+    let searchResults = (await promise_wrapper(bookmarks.search, bookmarks, [search_term]));
+    if (typeof (searchResults) === "undefined" || searchResults.length === 0) {
+        // Create the folder
+        print("Results not found, making folder");
+        create_folder();
+    } else {
+        print("Results found, verifying");
+
+        // Check if a result has "Other Bookmarks" as the parent
+        let target = null;
+        searchResults.forEach((element) => {
+            // Check that this element is a folder on another
+            if (element.parentId == otherBookmarksID && typeof(element.url) === "undefined") {
+                target = element;
+            }
+        });
+        if (target === null) {
+            // A bookmark with the same name as the folder is found, but it isn't a folder in the proper section
+            print("Results incorrect, making folder");
+            create_folder();
+        } else {
+            parent_folder = target;
+        }
+    }
+}
+
+// This function creates the bookmark folder (called by search_create_folder)
+async function create_folder() {
+    // Shortcut to reduce function call complexity
+    let bookmarks = chrome.bookmarks;
+
+    // The two properties of the new folder that matter
+    let new_folder_props = {
+        'parentId': otherBookmarksID,
+        'title': folder_name
+    };
+    let created_folder = await promise_wrapper(bookmarks.create, bookmarks, [new_folder_props]);
+    parent_folder = created_folder;
+    print("Created " + parent_folder.title + " bookmark folder");
 }
 
 function populate_bookmarks() {
@@ -147,27 +134,17 @@ function change_folder_name() {
     });
 }
 
+// Utility function to allow async/await to be used on the chrome functions (thus avoiding callback hell)
+function promise_wrapper(func, context, options = []) {
+    let newFunc = func.bind(context);
+    return new Promise(
+        (resolve) => {
+            newFunc(...options, resolve);
+        }
+    );
+}
+
 // Utility function to print to the background script
 function print(message) {
     chrome.extension.getBackgroundPage().console.log(message);
 }
-
-
-
-// chrome.bookmarks.search({
-//     'title': "test bookmark"
-// }, function (results) {
-// if (results.length == 0) {
-//     //console.log("Could not find it");
-//     document.getElementById("demo").innerHTML = "Could not find it";
-//     chrome.bookmarks.create({
-//         "title": "test bookmark"
-//     }, function (newBookmark) {
-//         //console.log("Created " + newBookmark.title);
-//         document.getElementById("demo").innerHTML = "Created " + newBookmark.title;
-//     });
-// } else {
-//     //console.log("Found " + results[0].title);
-//     document.getElementById("demo").innerHTML = "Found " + results[0].title;
-// }
-// });
