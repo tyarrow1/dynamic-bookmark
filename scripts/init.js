@@ -26,7 +26,8 @@ async function init() {
     document.getElementById("demo").innerHTML = folder_name;
 
     await search_create_folder();
-    populate_bookmarks();
+    await populate_bookmarks();
+    await update_bookmark_dropdown();
 }
 
 // This function will find the bookmark folder, creating it if it needs to
@@ -84,31 +85,50 @@ async function create_folder() {
 }
 
 // This function populates bookmarks into the bookmark folder
-function populate_bookmarks() {
+async function populate_bookmarks() {
     print("populating bookmarks");
 
-    chrome.bookmarks.getChildren(parent_folder.id, function (results) {
-        if (typeof (results) === "undefined" || results.length === 0) {
-            print("No bookmarks found in folder");
-            bookmark_pairs = [];
-            return;
-        }
-        // Initialize new_bookmark_pairs
-        var new_bookmark_pairs = [];
+    let bookmarks = chrome.bookmarks;
+    let results = await promise_wrapper(bookmarks.getChildren,bookmarks,[parent_folder.id]);
+    if (typeof (results) === "undefined" || results.length === 0) {
+        print("No bookmarks found in folder");
+        bookmark_pairs = [];
+        return;
+    }
+    // Initialize new_bookmark_pairs
+    let new_bookmark_pairs = [];
 
-        // Populate the new array
-        results.forEach(element => {
-            new_bookmark_pairs.push(element);
-        });
-
-        // Print the new array
-        new_bookmark_pairs.forEach(element => {
-            print(`${element.title}:${element.url}`);
-        });
-
-        bookmark_pairs = new_bookmark_pairs;
-        bookmark_mode = true;
+    // Populate the new array
+    results.forEach(element => {
+        new_bookmark_pairs.push(element);
     });
+
+    // Print the new array
+    new_bookmark_pairs.forEach(element => {
+        print(`${element.title}:${element.url}`);
+    });
+
+    bookmark_pairs = new_bookmark_pairs;
+    bookmark_mode = true;
+}
+
+// Update the bookmark dropdown menu on the extension
+async function update_bookmark_dropdown() {
+    // Use a variable as a shortcut
+    let dropdown = Document.getElementById("bookmark_selection");
+
+    // Fill the table with an invalid option if the folder must be created
+    if (bookmark_mode = false) {
+        dropdown.innerHTML = '<option value="no_bookmarks">--</option>\n';
+        return;
+    } else {
+        let dropdown_contents = '';
+        bookmark_pairs.forEach((element) => {
+            dropdown_contents += `<option value="${element.title}">${element.title}</option>`;
+        });
+        dropdown_contents += '<option value="new_bookmark">Create a New Bookmark</option>';
+        dropdown.innerHTML = dropdown_contents;
+    }
 }
 
 function move_folders() {
