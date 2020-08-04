@@ -115,7 +115,7 @@ async function populate_bookmarks() {
 // Update the bookmark dropdown menu on the extension
 async function update_bookmark_dropdown() {
     // Use a variable as a shortcut
-    let dropdown = Document.getElementById("bookmark_selection");
+    let dropdown = document.getElementById("bookmark_selection");
 
     // Fill the table with an invalid option if the folder must be created
     if (bookmark_mode = false) {
