@@ -1,6 +1,6 @@
 // Initial variables
 var folder_name = "";       // Records folder name
-var bookmark_pairs = [];
+var bookmark_objects = [];
 var bookmark_mode = false;
 var parent_folder = null;
 
@@ -91,7 +91,7 @@ async function populate_bookmarks() {
     let results = await promise_wrapper(bookmarks.getChildren,bookmarks,parent_folder.id);
     if (typeof (results) === "undefined" || results.length === 0) {
         print("No bookmarks found in folder");
-        bookmark_pairs = [];
+        bookmark_objects = [];
         return;
     }
     // Initialize new_bookmark_pairs
@@ -107,7 +107,7 @@ async function populate_bookmarks() {
         print(`${element.title}:${element.url}`);
     });
 
-    bookmark_pairs = new_bookmark_pairs;
+    bookmark_objects = new_bookmark_pairs;
     bookmark_mode = true;
 }
 
@@ -124,7 +124,7 @@ async function update_bookmark_dropdown() {
         return;
     } else {
         let dropdown_contents = '';
-        bookmark_pairs.forEach((element) => {
+        bookmark_objects.forEach((element) => {
             dropdown_contents += `<option value="${element.title}">${element.title}</option>`;
         });
         if (dropdown_contents === '') {
@@ -153,9 +153,30 @@ async function set_bookmark() {
         return;
     }
 
+    // Since just the url is being changed, its relatively easy to make the changes object
     let new_bookmark_url = await current_url();
+    let bookmark_changes = { "url":new_bookmark_url };
 
-    // Next, update the bookmark's url
+    let bookmark_id = null;
+    // Find the id of the bookmark to change
+    bookmark_objects.forEach((element) => {
+        if (element.title = bookmark_name) {
+            print(element);
+            bookmark_id = element.id;
+        }
+    });
+    
+    // If the bookmark wasn't found, just update the bookmark list so it doesn't happen again
+    if (bookmark_id === null) {
+        await populate_bookmarks();
+        await update_bookmark_dropdown();
+        return;
+    } else {
+        // If it was found, update the bookmark (then the list)
+        await promise_wrapper(bookmarks.update,bookmarks,[bookmark_id,bookmark_changes]);
+        await populate_bookmarks();
+        await update_bookmark_dropdown();
+    }
 }
 
 // Function for removing a bookmark (activated via the "delete" button)
@@ -169,7 +190,26 @@ async function delete_bookmark() {
         return;
     }
 
-    // Next, delete the bookmark
+    let bookmark_id = null;
+    // Find the id of the bookmark to change
+    bookmark_objects.forEach((element) => {
+        if (element.title = bookmark_name) {
+            print(element);
+            bookmark_id = element.id;
+        }
+    });
+    
+    // If the bookmark wasn't found, just update the bookmark list so it doesn't happen again
+    if (bookmark_id === null) {
+        await populate_bookmarks();
+        await update_bookmark_dropdown();
+        return;
+    } else {
+        // If the bookmark was found, remove the bookmark and update the list
+        await promise_wrapper(bookmarks.remove,bookmarks,bookmark_id);
+        await populate_bookmarks();
+        await update_bookmark_dropdown();
+    }
 }
 
 // Function for creating a new bookmark (activated via the "create" button)
@@ -195,6 +235,7 @@ async function create_bookmark() {
     await promise_wrapper(bookmarks.create,bookmarks,new_bookmark);
 
     await populate_bookmarks();
+    await update_bookmark_dropdown();
 }
 
 // Function for changing the folder that the bookmarks are stored in

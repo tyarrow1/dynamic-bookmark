@@ -1,0 +1,13 @@
+FIXES
+Better name verification for bookmarks
+- make the "new_bookmark" selection work better and allow that name
+
+
+FUNCTIONALITY
+Add a "Go" button which will navigate to the currently selected bookmark
+
+Make a way to see a bookmark's URL (and get feedback about being on a bookmark's domain or exact url)
+
+
+FUTURE
+Add "auto mode", which will dynamically update a single bookmark
